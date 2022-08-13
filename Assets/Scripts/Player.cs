@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,6 +9,10 @@ public class Player : MonoBehaviour
     private float horizontalinput;
     private Rigidbody rigidBodyComp;
     private bool grounded;
+    private int superJumpsRemaining=0;
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private LayerMask playerMask;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -25,19 +30,33 @@ public class Player : MonoBehaviour
     //fixed update is called every time physics update
     private void FixedUpdate()
     {
-        if(!grounded)
+        rigidBodyComp.velocity = new Vector3(horizontalinput, rigidBodyComp.velocity.y, 0);
+        if (Physics.OverlapSphere(groundCheck.position, 0.1f,playerMask).Length==0)
             return;
 
         if (jumpKey)
         {
-           rigidBodyComp.AddForce(Vector3.up * 5, ForceMode.VelocityChange);
+            float jumppower = 5f;
+            if (superJumpsRemaining > 0)
+            {
+                jumppower *= 2;
+                superJumpsRemaining--;
+            }
+           rigidBodyComp.AddForce(Vector3.up * jumppower, ForceMode.VelocityChange);
             jumpKey = false;
         }
-        rigidBodyComp.velocity = new Vector3(horizontalinput, rigidBodyComp.velocity.y, 0);
+        
     }
 
-    private void OnCollisionEnter(Collision collision)=> grounded = true;
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.layer == 7)
+        {
+            Destroy(other.gameObject);
+            superJumpsRemaining++;
+        }
+    }
 
-    private void OnCollisionExit(Collision collision) => grounded = false;
-    
+
+
 }
